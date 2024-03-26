@@ -33,12 +33,15 @@ def Tline(FeedlineWidth, FeedlineLength, FeedlineGap,
     taper_r_gap = pr.route_smooth(fl.ports['Out'], bp_r.ports['In'], width = np.array([FeedlineWidth + 2*FeedlineGap, BondpadWidth + 2*BondpadGap]), layer = 1)
     
     #Add gap at the end of the bondpads
-    width = 100
+    width = 50
     gap_l = pg.rectangle(size = (width, BondpadWidth + 2*BondpadGap), layer = 1)
     gap_l.move((-BondpadLength - TaperLength- width, -BondpadWidth/2- BondpadGap))
     gap_r = pg.rectangle(size = (width, BondpadWidth+ 2*BondpadGap), layer = 1)
     gap_r.move((BondpadLength + TaperLength + FeedlineLength, -BondpadWidth/2 - BondpadGap))
 
+    # We now create two Devices, one for the metallic parts 
+    # and one for the gap sections (Etched parts)
+    
     # Add metallic parts to a device
     Dmetal = Device('Tline_metal')
     Dmetal.add_polygon([fl.get_polygons()[0], bp_l.get_polygons()[0], 
@@ -89,13 +92,10 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
     Dind = D << Ind_Poly
 
     # Taper section between inductor and capacitor
-    route = pr.route_smooth(Cap_Poly.ports['Midpoint'], Ind_Poly.ports['Top'], width = np.array([TaperWidth, InductorWidth]), layer = 0)
+    route = pr.route_smooth(Dcap.ports['Midpoint'], Dind.ports['Top'], width = np.array([TaperWidth, InductorWidth]), layer = 0)
     Droute = D << route
 
-    #Create final device without references
-    Dres = Device('SchusterResonator')
-    Dres.add_polygon(pg.union(D, layer = 0).get_polygons())
-
+    #Create etch box around the resonator
     Etch, ysize, xsize = SquareEtch(SpacingC0,
                                             SpacingCc,
                                             StraightLengthInductor,
@@ -105,11 +105,8 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                                             TaperLength)
     
     Etch.move(destination = (-xsize/2, -ysize + (3/2)*CapacitorWidth))
-
-    Detch = Device('Etch')
-    Detch.add_polygon(Etch.get_polygons(), layer = 1)
     
-    return Dres, Detch
+    return D, Etch
 
 
 def CapacitorSection(CapacitorHorizontalLength, 
