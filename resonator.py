@@ -250,3 +250,40 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
 
     return Ground_Plane, D_metal, FinalChip
+
+
+def ChipTline(Chipsize,
+            FeedlineWidth, FeedlineLength, FeedlineGap, 
+            FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
+):
+    
+    # Layers
+    ls = LayerSet()
+    ls.add_layer('Ground', gds_layer=0, color = 'red')
+    ls.add_layer('Metal', gds_layer=1, color = 'blue')
+
+    #Origin will be defined in the center of the chip
+    Chip = Device('Chip')
+    Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Ground']).get_polygons())
+    Chip.move(destination = (-Chipsize[0]/2, -Chipsize[1]/2)) #Center The chip
+    
+    # Devices for the resonators and Tline metal and gap parts
+    D_metal = Device('Metal')
+    D_gap = Device('Gap')
+    
+    #Tline in the center of the chip
+    TlineMetal, TlineGap = Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
+                                 FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap)
+    TlineMetal.movex(-FeedlineLength/2)
+    TlineGap.movex(-FeedlineLength/2)
+
+    D_metal.add_ref(TlineMetal)
+    D_gap.add_ref(TlineGap)
+
+    
+    Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
+    FinalChip = Device('FinalChip')
+    FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Ground'])
+    FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
+
+    return Ground_Plane, D_metal, FinalChip

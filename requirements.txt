@@ -59,6 +59,7 @@ python_abi=3.12=4_cp312
 pywin32=306=py312h53d5487_2
 pyzmq=25.1.2=py312h1ac6f91_0
 setuptools=69.2.0=pyhd8ed1ab_0
+scipy
 six=1.16.0=pyh6c4a22f_0
 stack_data=0.6.2=pyhd8ed1ab_0
 tbb=2021.11.0=h91493d7_1
