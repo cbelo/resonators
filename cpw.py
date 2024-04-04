@@ -2,13 +2,16 @@ import numpy as np
 import scipy.constants as pyc
 from scipy.special import ellipk
 
-def fun_k(width, spacing, thickness):
+def fun_k(width, spacing, thickness, simple = False):
     '''
     Returns the k parameter for the elliptic integrals for the CPW geometry with metallic with, etch spacing and thickness
     '''
-    numerator = np.sinh(np.pi*width/(4*thickness))
-    denominator = np.sinh(np.pi*(width+2*spacing)/(4*thickness))
-    return numerator/denominator
+    if simple:
+        return width/(width+2*spacing)
+    else:
+        numerator = np.sinh(np.pi*width/(4*thickness))
+        denominator = np.sinh(np.pi*(width+2*spacing)/(4*thickness))
+        return numerator/denominator
 
 def cpw_cap_diel(k, epsilon_r):
     '''
@@ -20,13 +23,13 @@ def cpw_cap_diel(k, epsilon_r):
     cap = 2*pyc.epsilon_0*(epsilon_r)*K/K_prime
     return cap
 
-def cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r):
+def cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r,  simple =False):
     '''
     Returns the total capacitance per unit length of a CPW with air and dielectric layers
     '''
-    k_air = fun_k(width, spacing, thickness_air)#fun_k(width, spacing1, spacing2, thickness_air)
-    k_subs = fun_k(width, spacing, thickness_subs)#fun_k(width, spacing1, spacing2, thickness_subs)
-    return cpw_cap_diel(k_air, epsilon_r=1) + cpw_cap_diel(k_subs, epsilon_r=epsilon_r)
+    k_air = fun_k(width, spacing, thickness_air, simple = simple)#fun_k(width, spacing1, spacing2, thickness_air)
+    k_subs = fun_k(width, spacing, thickness_subs, simple = simple)#fun_k(width, spacing1, spacing2, thickness_subs)
+    return cpw_cap_diel(k_air, epsilon_r=2) + cpw_cap_diel(k_subs, epsilon_r=epsilon_r-1)
 
 def cpw_ind_geo(k):
     '''
@@ -91,15 +94,15 @@ def f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq,
     return np.array([f0, np.pi*f0_LC])
 
 if __name__ == '__main__':
-    width = 15.3e-6
-    spacing = 3e-6
+    width = 100e-6
+    spacing = 50e-6
     thickness_air = 10e-3
     thickness_subs = 500e-6
     epsilon_r = 11.9
-    ind_kin_sq = 0#1.2e-6
+    ind_kin_sq = 5e-12
     length = 1.04e-3
     print('Impedance:', impedance_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq))
     print('Effective relative permittivity:', epsilon_eff(width, spacing, thickness_air, thickness_subs, epsilon_r))
     print('Inductance:', cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq))
-    print('Capacitance:', cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r))
+    print('Capacitance:', cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r, simple =False))
     print('Resonant frequency:', 1e-9*f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq, length))

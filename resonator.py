@@ -68,6 +68,7 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                             InductorVerticalLength,
                             InductorHorizontalLength,
                             InductorWidth,
+                            InductorEndLength,
                             TaperWidth,
                             TaperLength,
                             SpacingC0, 
@@ -75,18 +76,18 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
     
     D = Device()
 
+    #Origin defined in the middle of the capacitor
     #Capacitor section
     Cap_Poly = CapacitorSection(CapacitorHorizontalLength,
                                 CapacitorVerticalLength,
                                 CapacitorWidth,
                                 TaperWidth)
     Dcap = D << Cap_Poly
-
     #Inductor section
     Ind_Poly, StraightLengthInductor = InductorSection(NumberOfBends,
                                                         InductorVerticalLength,
                                                         InductorHorizontalLength,
-                                                        CapacitorWidth,
+                                                        InductorEndLength,
                                                         InductorWidth)
     Ind_Poly.move(destination = (0, -CapacitorWidth/2 - TaperLength))
     Dind = D << Ind_Poly
@@ -94,7 +95,6 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
     # Taper section between inductor and capacitor
     route = pr.route_smooth(Dcap.ports['Midpoint'], Dind.ports['Top'], width = np.array([TaperWidth, InductorWidth]), layer = 0)
     Droute = D << route
-
     #Create etch box around the resonator
     Etch, ysize, xsize = SquareEtch(SpacingC0,
                                             SpacingCc,
@@ -103,9 +103,8 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                                             CapacitorVerticalLength,
                                             CapacitorWidth, 
                                             TaperLength)
-    
-    Etch.move(destination = (-xsize/2, -ysize + (3/2)*CapacitorWidth))
-    
+
+    Etch.move(origin = (0,0), destination = (-xsize/2, (-ysize + (1/2)*CapacitorWidth) + SpacingCc))
     return D, Etch
 
 
@@ -168,13 +167,13 @@ def SquareEtch(SpacingC0,
                 CapacitorVerticalLength,
                 CapacitorWidth,
                 TaperLength):
-    #The prigin is defined by the capacitor section
+    #The origin is defined by the capacitor section
 
     #Square which defines the etch
     xsize = CapacitorHorizontalLength + CapacitorWidth + 2*SpacingC0
-    ysize = SpacingCc + TaperLength
+    ysize = SpacingCc 
     if StraightLengthInductor>CapacitorVerticalLength:
-        ysize += (CapacitorWidth + StraightLengthInductor) 
+        ysize += (CapacitorWidth + StraightLengthInductor+ TaperLength) 
     else:
         ysize += CapacitorVerticalLength
     SquareEtch = pg.rectangle(size = (xsize, ysize), layer = 0)
@@ -184,7 +183,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         FeedlineWidth, FeedlineLength, FeedlineGap, 
                         FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
                         CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
-                        NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,
+                        NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
                         TaperWidth, TaperLength, SpacingC0, SpacingCc):
     
     # Layers
@@ -211,7 +210,10 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     D_gap.add_ref(TlineGap)
 
     # Resonators
-    xpos = np.linspace(-FeedlineLength/2 + 1.2*CapacitorHorizontalLength[0], FeedlineLength/2 - 1.2*CapacitorHorizontalLength[-1] , NumberOfResonators)
+    if NumberOfResonators == 1:
+        xpos = [0]
+    else:
+        xpos = np.linspace(-FeedlineLength/2 + 1.2*CapacitorHorizontalLength[0], FeedlineLength/2 - 1.2*CapacitorHorizontalLength[-1] , NumberOfResonators)
     # ypos_abs = FeedlineWidth/2 + FeedlineGap + SeparationTlineResonator + SpacingCc + CapacitorWidth/2
     sign = 1
 
@@ -223,6 +225,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                                                   InductorVerticalLength[i],
                                                   InductorHorizontalLength[i],
                                                   InductorWidth[i],
+                                                  InductorEndLength[i],
                                                   TaperWidth[i],
                                                   TaperLength[i],
                                                   SpacingC0[i], 
