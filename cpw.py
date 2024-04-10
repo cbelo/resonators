@@ -87,11 +87,32 @@ def f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq,
     '''
     C = cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r)
     L = cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq)
-    epsilon = epsilon_eff(width, spacing, thickness_air, thickness_subs, epsilon_r)
-    f0_LC = 1/(2*np.pi*np.sqrt(L*C)*length)
-    f0 = pyc.c/np.sqrt(epsilon)*(1/(2*length))
-    print(1/(2*np.sqrt(L*C)*length)*1e-9)
-    return np.array([f0, np.pi*f0_LC])
+    vph = 1/np.sqrt(C*L)
+    f0 = vph/(2*length)
+    return f0
+
+def cpw_simpler(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq):
+    '''
+    Returns the characteristic impedance of a CPW with air and dielectric layers
+    '''
+    k0 = fun_k(width, spacing, thickness_subs, simple = True)
+    k1 = fun_k(width, spacing, thickness_subs, simple = True)
+    k_prime0 = np.sqrt(1-k0**2)
+    k_prime1 = np.sqrt(1-k1**2)
+    K0 = ellipk(k0)
+    K0_prime = ellipk(k_prime0)
+    K1 = ellipk(k1)
+    K1_prime = ellipk(k_prime1)
+    C1 = 2*pyc.epsilon_0*(epsilon_r-1)*K1/K1_prime 
+    C_air = 4*pyc.epsilon_0*(K0/K0_prime)
+    C_CPW = C1 + C_air
+    epsilon = C_CPW/C_air
+    Z = 1/(pyc.c*C_air*np.sqrt(epsilon))
+    L = (pyc.mu_0/4)*(K0_prime/K0)
+    
+    return C_CPW, epsilon, Z, L
+                   
+
 
 if __name__ == '__main__':
     width = 100e-6
@@ -99,10 +120,16 @@ if __name__ == '__main__':
     thickness_air = 10e-3
     thickness_subs = 500e-6
     epsilon_r = 11.9
-    ind_kin_sq = 5e-12
+    ind_kin_sq = 0e-12
     length = 1.04e-3
     print('Impedance:', impedance_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq))
     print('Effective relative permittivity:', epsilon_eff(width, spacing, thickness_air, thickness_subs, epsilon_r))
-    print('Inductance:', cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq))
-    print('Capacitance:', cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r, simple =False))
-    print('Resonant frequency:', 1e-9*f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq, length))
+    print('Inductance (nH/m):', 1e9*cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq))
+    print('Capacitance (pF/m):', 1e12*cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r, simple =False))
+    print('Resonant frequency (GHz):', 1e-9*f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq, length))
+    print('\n Simplified model:')
+    C_CPW, epsilon, Z, L = cpw_simpler(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq)
+    print('Impedance:', Z)
+    print('Effective relative permittivity:', epsilon)
+    print('Inductance (nH/m):', 1e9*L)
+    print('Capacitance (pF/m):', 1e12*C_CPW)
