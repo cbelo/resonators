@@ -6,7 +6,7 @@ import phidl.path as pp
 import phidl.routing as pr
 import phidl.geometry as pg
 import phidl
-from MyPhidlFunctions import WaveGuideMaker
+from Bertram_Functions.MyPhidlFunctions import WaveGuideMaker
 
 
 def Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
