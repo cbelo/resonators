@@ -7,10 +7,10 @@ def fun_k(width, spacing, thickness, simple = False):
     Returns the k parameter for the elliptic integrals for the CPW geometry with metallic with, etch spacing and thickness
     '''
     if simple:
-        return width/(width+spacing)
+        return width/(width+2*spacing)
     else:
         numerator = np.sinh(np.pi*width/(4*thickness))
-        denominator = np.sinh(np.pi*(width+spacing)/(4*thickness))
+        denominator = np.sinh(np.pi*(width+2*spacing)/(4*thickness))
         return numerator/denominator
 
 def cap_coupling(width_cap, length_horizontal, distance_to_feedline,epsilon_r, thickness_subs):
@@ -25,8 +25,8 @@ def cap_coupling(width_cap, length_horizontal, distance_to_feedline,epsilon_r, t
     K0_prime = ellipk(k_prime0)
     K1 = ellipk(k1)
     K1_prime = ellipk(k_prime1)
-    cap = 2*pyc.epsilon_0*(epsilon_r-1)*K1/K1_prime +4*pyc.epsilon_0**K0_prime/K0
-    return cap*length_horizontal
+    cap = 2*pyc.epsilon_0*(epsilon_r-1)*K1/K1_prime +4*pyc.epsilon_0*K0/K0_prime
+    return cap*length_horizontal/2
 
 def cap_ground(width_cap, length_vertical, distance_to_ground,epsilon_r, thickness_subs):
     '''
@@ -40,8 +40,8 @@ def cap_ground(width_cap, length_vertical, distance_to_ground,epsilon_r, thickne
     K0_prime = ellipk(k_prime0)
     K1 = ellipk(k1)
     K1_prime = ellipk(k_prime1)
-    cap = 2*pyc.epsilon_0*(epsilon_r-1)*K1/K1_prime +4*pyc.epsilon_0**K0_prime/K0
-    return 2*cap*length_vertical #The factor of 2 is because the ground plane is on both sides of the resonator
+    cap = 2*pyc.epsilon_0*(epsilon_r-1)*K1/K1_prime +4*pyc.epsilon_0*K0/K0_prime
+    return cap*length_vertical #The factor of 2 is because the ground plane is on both sides of the resonator
 
 def ind_ground_geo(width_ind, length_ind, distance_to_ground):
     '''
@@ -52,7 +52,10 @@ def ind_ground_geo(width_ind, length_ind, distance_to_ground):
     K = ellipk(k)
     K_prime = ellipk(k_prime)
     ind = (pyc.mu_0/4)*(K_prime/K)
-    return 2*ind*length_ind #The factor of 2 is because the ground plane is on both sides of the resonator
+    #Extra length due to the short to ground
+    length_extra = (width_ind + 2*distance_to_ground)/8
+    print(length_extra)
+    return ind*(length_ind + length_extra) 
 
 def ind_ground_total(width_ind, length_ind, distance_to_ground, ind_kin_sq):
     '''
@@ -68,6 +71,7 @@ def impedance_Schuster(width_cap, length_horizontal, distance_to_feedline, width
     '''
     cap_coupling_val = cap_coupling(width_cap, length_horizontal, distance_to_feedline,epsilon_r, thickness_subs)
     cap_ground_val = cap_ground(width_cap, length_ind, distance_to_ground_cap,epsilon_r, thickness_subs)
+    
     distance_to_ground_ind = distance_to_ground_cap + length_horizontal/2+ width_cap/2
     ind_ground_val = ind_ground_total(width_ind, length_ind, distance_to_ground_ind, ind_kin_sq)
     imp0 = np.sqrt(ind_ground_val / (cap_coupling_val + cap_ground_val))
@@ -80,8 +84,12 @@ def resonance_freq_Schuster(width_cap, length_horizontal, distance_to_feedline, 
     cap_coupling_val = cap_coupling(width_cap, length_horizontal, distance_to_feedline,epsilon_r, thickness_subs)
     cap_ground_val = cap_ground(width_cap, length_ind, distance_to_ground_cap,epsilon_r, thickness_subs)
     distance_to_ground_ind = distance_to_ground_cap + length_horizontal/2 + width_cap/2
+    print(length_ind)
     ind_ground_val = ind_ground_total(width_ind, length_ind, distance_to_ground_ind, ind_kin_sq)
-    f0 = 2*np.pi/(np.sqrt(ind_ground_val*(cap_coupling_val + cap_ground_val)))
+    print(f'{ind_ground_val*1e9} nH')
+    print(f'{1e15*cap_ground_val} fF')
+    print(f'{1e15*cap_coupling_val} fF')
+    f0 = 1/(2*np.pi*np.sqrt(ind_ground_val*(cap_coupling_val + cap_ground_val)))
     return f0
 
 if __name__ == '__main__':
