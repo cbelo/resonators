@@ -1,118 +1,112 @@
 import numpy as np
 import scipy.constants as pyc
-from scipy.special import ellipk
+from scipy.special import ellipk, ellipkm1
 
-def fun_k(width, spacing, thickness, simple = False):
+
+def fun_k_CPW(width, spacing, thickness, simple = False):
     '''
     Returns the k parameter for the elliptic integrals for the CPW geometry with metallic with, etch spacing and thickness
+    If simple is True, it returns the k parameter for the CPW geometry with infinite substrate (thickness = infinity).
     '''
     if simple:
         return width/(width+2*spacing)
-    else:
-        numerator = np.sinh(np.pi*width/(4*thickness))
-        denominator = np.sinh(np.pi*(width+2*spacing)/(4*thickness))
-        return numerator/denominator
+    else:######### FIX FOR LOW THIKNESS
+        if np.pi*(width+2*spacing)/(4*thickness)>709:
+            k = np.exp(-np.pi*(spacing)/(2*thickness))
+        else:
+            numerator = np.sinh(np.pi*width/(4*thickness))
+            denominator = np.sinh(np.pi*(width+2*spacing)/(4*thickness))
+            k = numerator/denominator
+        return k
 
-def cpw_cap_diel(k, epsilon_r):
+def C_air_CPW(width, spacing):
     '''
-    Returns the capacitance per unit length of a CPW with dielectric layer with relative permittivity epsilon_r
+    Returns the capacitance through air of the CPW to the ground plane.
     '''
+    k = fun_k_CPW(width, spacing, thickness = 0, simple=True)
     k_prime = np.sqrt(1-k**2)
     K = ellipk(k)
     K_prime = ellipk(k_prime)
-    cap = 2*pyc.epsilon_0*(epsilon_r)*K/K_prime
-    return cap
+    C_air = 4*pyc.epsilon_0*K/K_prime
+    return C_air
 
-def cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r,  simple =False):
+def cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs):
     '''
-    Returns the total capacitance per unit length of a CPW with air and dielectric layers
+    Returns the  capacitance of the CPW to the ground plane per length.
+    Eplison_r is the relative permittivity of the substrate. It can be a number or an array.
+    The thickness of the substrate h must have the same dimension than epsilon_r.
+    Order of epsilon_r & h: The first element is the layer closer to the metallic layer.
     '''
-    k_air = fun_k(width, spacing, thickness_air, simple = simple)#fun_k(width, spacing1, spacing2, thickness_air)
-    k_subs = fun_k(width, spacing, thickness_subs, simple = simple)#fun_k(width, spacing1, spacing2, thickness_subs)
-    return cpw_cap_diel(k_air, epsilon_r=2) + cpw_cap_diel(k_subs, epsilon_r=epsilon_r-1)
 
-def cpw_ind_geo(k):
+    if isinstance(epsilon_r, (int, float)):
+        epsilon_r = np.array([epsilon_r])
+        thickness_subs = np.array([thickness_subs])
+
+    C_air = C_air_CPW(width, spacing)
+    cap_contributions = [C_air]
+
+    for i in range(len(epsilon_r)):
+        k = fun_k_CPW(width, spacing, thickness_subs[i])
+        k_prime = np.sqrt(1-k**2)
+        K = ellipk(k)
+        K_prime = ellipkm1(k_prime)
+        if i == len(epsilon_r)-1:
+            e_r = epsilon_r[i]-1
+        else:
+            e_r = epsilon_r[i]-epsilon_r[i+1]
+        cap = 2*pyc.epsilon_0*e_r*K/K_prime
+        cap_contributions.append(cap)
+    return sum(cap_contributions)
+
+def ind_CPW_per_length(width, spacing, ind_kin_sq):
     '''
-    Returns the geometric inductance per unit length of a CPW
+    Returns the inductance of the CPW to the ground plane per length.
+    Eplison_r is the relative permittivity of the substrate. It can be a number or an array.
+    The thickness of the substrate h must have the same dimension than epsilon_r.
+    Order of epsilon_r & h: The first element is the layer closer to the metallic layer.
     '''
+    k = fun_k_CPW(width, spacing, thickness=0, simple=True)
     k_prime = np.sqrt(1-k**2)
     K = ellipk(k)
     K_prime = ellipk(k_prime)
-    ind = (pyc.mu_0/4)*(K_prime/K)
+    ind_geo = (pyc.mu_0/4)*(K_prime/K)
+    ind_kin = ind_kin_sq/width
+    return ind_kin + ind_geo
 
-    return ind
+def impedance_CPW(width, spacing, epsilon_r, thickness_subs, ind_kin_sq):
+    '''
+    Returns the impedance of the CPW.
+    Eplison_r is the relative permittivity of the substrate. It can be a number or an array.
+    The thickness of the substrate h must have the same dimension than epsilon_r.
+    Order of epsilon_r & h: The first element is the layer closer to the metallic layer.
+    '''
+    C = cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs)
+    L = ind_CPW_per_length(width, spacing, ind_kin_sq)
+    return np.sqrt(L/C)
 
-def cpw_ind_geo_total(width, spacing, thickness_air, thickness_subs):
+def resonance_freq_CPW(width, spacing, epsilon_r, thickness_subs, ind_kin_sq, length_CPW):
     '''
-    Returns the total geometric inductance per unit length of a CPW with air and dielectric layers
+    Returns the resonance frequency of the CPW.
+    Eplison_r is the relative permittivity of the substrate. It can be a number or an array.
+    The thickness of the substrate h must have the same dimension than epsilon_r.
+    Order of epsilon_r & h: The first element is the layer closer to the metallic layer.
     '''
-    k_air = fun_k(width, spacing, thickness_air)#fun_k(width_wire, spacing1, thickness_air)
-    return cpw_ind_geo(k_air) 
-
-def cpw_ind_kin(ind_kin_sq, width):
-    '''
-    Returns the kinetic inductance per unit length of a CPW
-    '''
-    return ind_kin_sq/width
-
-def cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq):
-    '''
-    Returns the total inductance per unit length of a CPW with air and dielectric layers
-    '''
-    geometric = cpw_ind_geo_total(width, spacing, thickness_air, thickness_subs)
-    kinetic = cpw_ind_kin(ind_kin_sq, width)
-    return geometric + kinetic
-
-def impedance_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq):
-    '''
-    Returns the characteristic impedance of a CPW with air and dielectric layers
-    '''
-    cap = cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r)
-    ind = cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq)
-    return np.sqrt(ind/cap)
-
-
-def epsilon_eff(width, spacing, thickness_air, thickness_subs, epsilon_r):
-    '''
-    Returns the effective relative permittivity of a CPW with air and dielectric layers
-    '''
-    k_air = fun_k(width, spacing, thickness_air)#fun_k(width, spacing1, spacing2, thickness_air)
-    K = ellipk(k_air)
-    K_prime = ellipk(np.sqrt(1-k_air**2))
-    return ((30*pyc.pi /impedance_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, 0))*(K_prime/K))**2
-
-def f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq, length):
-    '''
-    Returns the resonant frequency of a CPW with air and dielectric layers
-    '''
-    C = cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r)
-    L = cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq)
+    C = cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs)
+    L = ind_CPW_per_length(width, spacing, ind_kin_sq)
     vph = 1/np.sqrt(C*L)
-    f0 = vph/(2*length)
+    f0 = vph/(2*length_CPW)
     return f0
 
-def cpw_simpler(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq):
+def epsilon_eff_CPW(width, spacing, epsilon_r, thickness_subs):
     '''
-    Returns the characteristic impedance of a CPW with air and dielectric layers
+    Returns the effective relative permittivity of the CPW.
+    Eplison_r is the relative permittivity of the substrate. It can be a number or an array.
+    The thickness of the substrate h must have the same dimension than epsilon_r.
+    Order of epsilon_r & h: The first element is the layer closer to the metallic layer.
     '''
-    k0 = fun_k(width, spacing, thickness_subs, simple = True)
-    k1 = fun_k(width, spacing, thickness_subs, simple = True)
-    k_prime0 = np.sqrt(1-k0**2)
-    k_prime1 = np.sqrt(1-k1**2)
-    K0 = ellipk(k0)
-    K0_prime = ellipk(k_prime0)
-    K1 = ellipk(k1)
-    K1_prime = ellipk(k_prime1)
-    C1 = 2*pyc.epsilon_0*(epsilon_r-1)*K1/K1_prime 
-    C_air = 4*pyc.epsilon_0*(K0/K0_prime)
-    C_CPW = C1 + C_air
-    epsilon = C_CPW/C_air
-    Z = 1/(pyc.c*C_air*np.sqrt(epsilon))
-    L = (pyc.mu_0/4)*(K0_prime/K0)
-    
-    return C_CPW, epsilon, Z, L
-                   
-
+    C = cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs)
+    C_air = C_air_CPW(width, spacing)
+    return C/C_air
 
 if __name__ == '__main__':
     width = 100e-6
@@ -122,14 +116,8 @@ if __name__ == '__main__':
     epsilon_r = 11.9
     ind_kin_sq = 0e-12
     length = 1.04e-3
-    print('Impedance:', impedance_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq))
-    print('Effective relative permittivity:', epsilon_eff(width, spacing, thickness_air, thickness_subs, epsilon_r))
-    print('Inductance (nH/m):', 1e9*cpw_ind_total(width, spacing, thickness_air, thickness_subs, ind_kin_sq))
-    print('Capacitance (pF/m):', 1e12*cpw_cap_total(width, spacing, thickness_air, thickness_subs, epsilon_r, simple =False))
-    print('Resonant frequency (GHz):', 1e-9*f0_cpw(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq, length))
-    print('\n Simplified model:')
-    C_CPW, epsilon, Z, L = cpw_simpler(width, spacing, thickness_air, thickness_subs, epsilon_r, ind_kin_sq)
-    print('Impedance:', Z)
-    print('Effective relative permittivity:', epsilon)
-    print('Inductance (nH/m):', 1e9*L)
-    print('Capacitance (pF/m):', 1e12*C_CPW)
+    print('Impedance:', impedance_CPW(width, spacing, epsilon_r, thickness_subs, ind_kin_sq))
+    print('Freq:', 1e-9*resonance_freq_CPW(width, spacing, epsilon_r, thickness_subs, ind_kin_sq, length))
+    print('Epsilon_eff:', epsilon_eff_CPW(width, spacing, epsilon_r, thickness_subs))
+    print('Cap per length:', 1e12*cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs))
+    print('Ind per length:', 1e9*ind_CPW_per_length(width, spacing, ind_kin_sq))
