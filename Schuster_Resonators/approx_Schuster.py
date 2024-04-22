@@ -2,6 +2,16 @@ import numpy as np
 import scipy.constants as pyc
 from scipy.special import ellipk, ellipkm1
 
+'''
+This script contains the functions to compute the impedance and resonance frequency of the Schuster resonator, using conformal mapping and elliptic integrals.
+The functions are based on the book  'Coplanar Waveguide Circuits, Components, and Systems' by Rainee N. Simons.
+These functions are valid for different substrate layers with different relative permittivities and thicknesses.
+
+The functions are:
+- fun_k_CPW: Returns the k parameter for the elliptic integrals for the CPW geometry with metallic width, etch spacing and substrate thickness (Section).
+- fun_k_asymmetric_stripline: Computes the argument of the elliptic integrals for the an asymmetric coplanar stripline (Section 6.2.3 in the book).
+'''
+
 def fun_k_CPW(width, spacing, thickness, simple = False):
     '''
     Returns the k parameter for the elliptic integrals for the CPW geometry with metallic with, etch spacing and thickness
@@ -192,9 +202,9 @@ def resonance_freq_Schuster(width_cap, horizontal_length_cap, distance_to_feedli
     Cg = cap_ground(width_cap, vertical_length_cap, distance_to_ground_cap, epsilon_r, thickness_subs)
     distance_to_ground_ind = distance_to_ground_cap + horizontal_length_cap/2 + width_cap/2
     Lg = ind_ground_total(width_ind, length_ind, distance_to_ground_ind, ind_kin_sq)
-    print(f'{Lg*1e9} nH')
-    print(f'{1e15*Cg} fF')
-    print(f'{1e15*Cc} fF')
+    print(f' Lg: {Lg*1e9} nH')
+    print(f' Cg: {1e15*Cg} fF')
+    print(f' Cc: {1e15*Cc} fF')
     return 1/(2*np.pi*np.sqrt(Lg*(Cc+Cg)))
 
 

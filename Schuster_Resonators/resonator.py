@@ -8,9 +8,33 @@ import phidl.geometry as pg
 import phidl
 from Bertram_Functions.MyPhidlFunctions import WaveGuideMaker
 
+'''
+Here are the functions to create, using Phidl, the Schuster resonators and the Tline GDS files.
+The functions are the following:
+- Tline: Creates the Tline with the bondpads and the taper sections
+- SchusterResonatorSmooth: Creates the Schuster resonator with the capacitors and inductors
+- CapacitorSection: Creates the capacitor section of the Schuster resonator
+- InductorSection: Creates the inductor section of the Schuster resonator
+- SquareEtch: Creates the square etch around the Schuster resonator
+- ChipResonatorsTline: Creates the chip with the Tline and the Schuster resonators
+- ChipTline: Creates the chip with only the Tline
+
+'''
+
 
 def Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
           TaperLength, BondpadWidth, BondpadLength, BondpadGap):
+    '''
+    Creates the Tline with the bondpads and the taper sections.
+    Parameters:
+    - FeedlineWidth: Width of the feedline
+    - FeedlineLength: Length of the feedline
+    - FeedlineGap: Gap of the feedline
+    - TaperLength: Length of the taper sections which connect the main feedline to the bondpads
+    - BondpadWidth: Width of the bondpads
+    - BondpadLength: Length of the bondpads
+    - BondpadGap: Gap of the bondpads
+    '''
     
     D = Device()
 
@@ -73,6 +97,22 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                             TaperLength,
                             SpacingC0, 
                             SpacingCc):
+    '''
+    Creates the Schuster resonator with the capacitors and inductors.
+    Parameters:
+    - CapacitorHorizontalLength: Horizontal length of the capacitor, which defines Cc
+    - CapacitorVerticalLength: Vertical length of the capacitor, which defines C0
+    - CapacitorWidth: Width of the capacitor
+    - NumberOfBends: Number of bends in the inductor
+    - InductorVerticalLength: Vertical length of the inductor bend
+    - InductorHorizontalLength: Horizontal length of the inductor bend
+    - InductorWidth: Width of the inductor
+    - InductorEndLength: Length of the straight section at the end of the inductor, which connects to ground
+    - TaperWidth: Width of the taper section between the inductor and the horizontal section of the capacitor
+    - TaperLength: Length of the taper section between the inductor and and the horizontal section of the capacitor
+    - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
+    - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
+    '''
     
     D = Device()
 
@@ -112,7 +152,15 @@ def CapacitorSection(CapacitorHorizontalLength,
                      CapacitorVerticalLength, 
                      CapacitorWidth,
                      TaperWidth):
-    
+    '''
+    Creates the capacitor section of the Schuster resonator. It has a Pi shape.
+    Origin defined in the middle of the horizontal length
+    Parameters:
+    - CapacitorHorizontalLength: Horizontal length of the capacitor, which defines Cc
+    - CapacitorVerticalLength: Vertical length of the capacitor, which defines C0
+    - CapacitorWidth: Width of the capacitor
+    - TaperWidth: Width of the taper section between the inductor and the horizontal section of the capacitor
+    '''
     #Create a path for the capacitor
     #Origin defined in the middle of the horizontal length
     points = np.array([(-CapacitorHorizontalLength/2, -CapacitorVerticalLength + CapacitorWidth/2), # CapacitorWidth/2 is the smoother radius
@@ -137,6 +185,16 @@ def InductorSection(NumberOfBends,
                     InductorHorizontalLength,
                     EndLength,
                     InductorWidth):
+    '''
+    Creates the inductor section of the Schuster resonator. It has a S-shape.
+    Origin defined on the top of the inductor
+    Parameters:
+    - NumberOfBends: Number of bends in the inductor
+    - InductorVerticalLength: Vertical length of the inductor bend. It is the vertical length of the S-shape
+    - InductorHorizontalLength: Horizontal length of the inductor bend. It is the horizontal length of the S-shape
+    - EndLength: Length of the straight section at the end of the inductor, which connects to ground
+    - InductorWidth: Width of the inductor
+    '''
     
     #Create a path for the inductor. Origin defined on the top of the inductor
     #Which will be connected to the port of the CapacitorSection
@@ -167,6 +225,17 @@ def SquareEtch(SpacingC0,
                 CapacitorVerticalLength,
                 CapacitorWidth,
                 TaperLength):
+    '''
+    Creates the square etch around the Schuster resonator. The origin is defined by the capacitor section.
+    Parameters:
+    - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
+    - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
+    - StraightLengthInductor: Length of the straight section at the end of the inductor, which connects to ground
+    - CapacitorHorizontalLength: Horizontal length of the capacitor, which defines Cc
+    - CapacitorVerticalLength: Vertical length of the capacitor, which defines C0
+    - CapacitorWidth: Width of the capacitor
+    - TaperLength: Length of the taper section between the inductor and and the horizontal section of the capacitor
+    '''
     #The origin is defined by the capacitor section
 
     #Square which defines the etch
@@ -185,7 +254,33 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
                         NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
                         TaperWidth, TaperLength, SpacingC0, SpacingCc):
-    
+    '''
+    Creates the chip with the Tline and Schuster resonators. The origin is defined in the center of the chip.
+    The resonators are placed alternating in the top and bottom of the feedline.
+    Parameters:
+    - Chipsize: Size of the chip
+    - NumberOfResonators: Number of resonators
+    - SeparationTlineResonator: Separation between the feedline and the etching box of the resonators. This spacing is metal.
+    - FeedlineWidth: Width of the feedline
+    - FeedlineLength: Length of the feedline
+    - FeedlineGap: Gap of the feedline
+    - FeedlineTaperLength: Length of the taper sections which connect the main feedline to the bondpads
+    - BondpadWidth: Width of the bondpads
+    - BondpadLength: Length of the bondpads
+    - BondpadGap: Gap of the bondpads
+    - CapacitorHorizontalLength: Horizontal length of the capacitor, which defines Cc
+    - CapacitorVerticalLength: Vertical length of the capacitor, which defines C0
+    - CapacitorWidth: Width of the capacitor
+    - NumberOfBends: Number of bends in the inductor
+    - InductorVerticalLength: Vertical length of the inductor bend
+    - InductorHorizontalLength: Horizontal length of the inductor bend
+    - InductorWidth: Width of the inductor
+    - InductorEndLength: Length of the straight section at the end of the inductor, which connects to ground
+    - TaperWidth: Width of the taper section between the inductor and the horizontal section of the capacitor
+    - TaperLength: Length of the taper section between the inductor and and the horizontal section of the capacitor
+    - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
+    - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
+    '''
     # Layers
     ls = LayerSet()
     ls.add_layer('Ground', gds_layer=0, color = 'red')
@@ -246,6 +341,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
         D_gap.add_ref(Etch)
     
     Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
+    ## Add the holes using fill_rectangle
     # pg.xor_diff(Chip, D_gap)
 
     FinalChip = Device('FinalChip')
@@ -257,8 +353,20 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
 
 def ChipTline(Chipsize,
             FeedlineWidth, FeedlineLength, FeedlineGap, 
-            FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
-):
+            FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap):
+    '''
+    Creates the chip with only the Tline. The origin is defined in the center of the chip.
+    Parameters:
+    - Chipsize: Size of the chip
+    - FeedlineWidth: Width of the feedline
+    - FeedlineLength: Length of the feedline
+    - FeedlineGap: Gap of the feedline
+    - FeedlineTaperLength: Length of the taper sections which connect the main feedline to the bondpads
+    - BondpadWidth: Width of the bondpads
+    - BondpadLength: Length of the bondpads
+    - BondpadGap: Gap of the bondpads
+    '''
+
     
     # Layers
     ls = LayerSet()
