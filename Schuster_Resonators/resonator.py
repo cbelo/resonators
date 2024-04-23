@@ -253,7 +253,8 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
                         CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
                         NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
-                        TaperWidth, TaperLength, SpacingC0, SpacingCc):
+                        TaperWidth, TaperLength, SpacingC0, SpacingCc,
+                        FinalSpacingBondpads = 100):
     '''
     Creates the chip with the Tline and Schuster resonators. The origin is defined in the center of the chip.
     The resonators are placed alternating in the top and bottom of the feedline.
@@ -280,12 +281,16 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     - TaperLength: Length of the taper section between the inductor and and the horizontal section of the capacitor
     - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
     - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
+    - FinalSpacingBondpads: Spacing between the bondpads and the edge of the chip. Neeeded for dicing.
+    - FluxHoles: If True, adds holes in the ground plane to avoid magnetic flux losses.
     '''
     # Layers
     ls = LayerSet()
     ls.add_layer('Ground', gds_layer=0, color = 'red')
     ls.add_layer('Metal', gds_layer=1, color = 'blue')
-
+    if Chipsize[0] != (FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + 2*FinalSpacingBondpads):
+        raise ValueError(f'The chip size length ({Chipsize[0]}um) is not equal to the sum of the feedline, bondpads and spacings ({FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + 2*FinalSpacingBondpads}um)')
+    
     #Origin will be defined in the center of the chip
     Chip = Device('Chip')
     Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Ground']).get_polygons())
@@ -308,7 +313,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     if NumberOfResonators == 1:
         xpos = [0]
     else:
-        xpos = np.linspace(-FeedlineLength/2 + 1.2*CapacitorHorizontalLength[0], FeedlineLength/2 - 1.2*CapacitorHorizontalLength[-1] , NumberOfResonators)
+        xpos = np.linspace(-0.4*FeedlineLength, 0.4*FeedlineLength , NumberOfResonators)
     # ypos_abs = FeedlineWidth/2 + FeedlineGap + SeparationTlineResonator + SpacingCc + CapacitorWidth/2
     sign = 1
 
@@ -330,7 +335,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
             Resonator.rotate(180)
             Etch.rotate(180)
 
-        ypos = sign*(FeedlineWidth/2 + FeedlineGap + SeparationTlineResonator 
+        ypos = sign*(FeedlineWidth/2 + FeedlineGap + SeparationTlineResonator[i] 
                      + SpacingCc[i] + CapacitorWidth[i]/2)
         Resonator.movex(xpos[i])
         Resonator.movey(ypos)
@@ -340,7 +345,16 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
         D_metal.add_polygon(Resonator.get_polygons())
         D_gap.add_ref(Etch)
     
+    #Final spacing bondpads
+    BondpadSpacingLeft = pg.rectangle(size = (FinalSpacingBondpads, 2*BondpadGap + BondpadWidth), layer = ls['Ground'])
+    BondpadSpacingLeft.move(destination = (-FeedlineLength/2 - FeedlineTaperLength - BondpadLength - FinalSpacingBondpads, -BondpadGap - BondpadWidth/2))
+    BondpadSpacingRight = BondpadSpacingLeft.copy('BondpadSpacingRight', translation=[(FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + FinalSpacingBondpads),0])
+    D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
+    D_gap.add_polygon(BondpadSpacingRight.get_polygons())
+
+    #Final chip structure
     Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
+
     ## Add the holes using fill_rectangle
     # pg.xor_diff(Chip, D_gap)
 
