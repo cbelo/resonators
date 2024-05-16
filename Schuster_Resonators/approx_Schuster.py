@@ -8,8 +8,18 @@ The functions are based on the book  'Coplanar Waveguide Circuits, Components, a
 These functions are valid for different substrate layers with different relative permittivities and thicknesses.
 
 The functions are:
-- fun_k_CPW: Returns the k parameter for the elliptic integrals for the CPW geometry with metallic width, etch spacing and substrate thickness (Section).
+- fun_k_CPW: Returns the k parameter for the elliptic integrals for the CPW geometry with metallic width, etch spacing and substrate thickness (Section 2.2.3).
 - fun_k_asymmetric_stripline: Computes the argument of the elliptic integrals for the an asymmetric coplanar stripline (Section 6.2.3 in the book).
+- fun_k_stripline_to_infinite_ground: Computes the argument of the elliptic integrals for the coplanar stripline to infinite ground (Section 6.2.4 in the book).
+- C_air_asymmetric_stripline: Returns the capacitance through air of the Schuster resonator to the feedline (Section 6.2.3 in the book).
+- C_air_stripline_to_infinite_ground: Returns the capacitance through air of the Schuster resonator to the ground (Section 6.2.4 in the book).
+- cap_coupling: Returns the coupling capacitance of the Schuster resonator to the feedline (Section 6.2.3 in the book).
+- cap_ground: Returns the coupling capacitance of the Schuster resonator to the ground plane (Section 6.2.4 in the book).
+- ind_ground_geo: Returns the coupling inductance of the Schuster resonator to the ground plane (Section 12.4.3 and 9.3 in the book).
+- ind_ground_total: Returns the total (geometric+kinetic) inductance per unit length of a CPW with air and dielectric layers.
+- impedance_Schuster: Returns the impedance of the Schuster resonator.
+- resonance_freq_Schuster: Returns the resonance frequency of the Schuster resonator.
+
 '''
 
 def fun_k_CPW(width, spacing, thickness, simple = False):
@@ -28,7 +38,6 @@ def fun_k_asymmetric_stripline(w1, w2, s, h):
     '''
     Computes the argument of the elliptic integrals for the an asymmetric coplanar stripline
     This is used to compute Cc in the Schuster resonator.
-    
     '''
     if 2*np.pi*(w1+w2+s)/h > 709:
         k = 1
