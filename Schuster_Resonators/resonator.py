@@ -420,6 +420,6 @@ def ChipTline(Chipsize,
     Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
     FinalChip = Device('FinalChip')
     FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Ground'])
-    FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
+    FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Ground'])
 
     return Ground_Plane, D_metal, FinalChip
