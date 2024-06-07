@@ -96,7 +96,8 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                             TaperWidth,
                             TaperLength,
                             SpacingC0, 
-                            SpacingCc):
+                            SpacingCc,
+                            calib = False):
     '''
     Creates the Schuster resonator with the capacitors and inductors.
     Parameters:
@@ -112,6 +113,7 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
     - TaperLength: Length of the taper section between the inductor and and the horizontal section of the capacitor
     - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
     - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
+    - calib : If True, it returns the different polygons in different layers.
     '''
     
     D = Device()
@@ -145,7 +147,10 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                                             TaperLength)
 
     Etch.move(origin = (0,0), destination = (-xsize/2, (-ysize + (1/2)*CapacitorWidth) + SpacingCc))
-    return D, Etch
+    if calib:
+        return D, Etch, Dcap, Dind, Droute
+    else:
+        return D, Etch
 
 
 def CapacitorSection(CapacitorHorizontalLength, 
@@ -241,10 +246,11 @@ def SquareEtch(SpacingC0,
     #Square which defines the etch
     xsize = CapacitorHorizontalLength + CapacitorWidth + 2*SpacingC0
     ysize = SpacingCc 
-    if StraightLengthInductor>CapacitorVerticalLength:
+    if StraightLengthInductor + TaperLength>CapacitorVerticalLength:
         ysize += (CapacitorWidth + StraightLengthInductor+ TaperLength) 
     else:
-        ysize += CapacitorVerticalLength
+        raise ValueError('The vertical length of the etch box is smaller than the vertical length of the inductor')
+
     SquareEtch = pg.rectangle(size = (xsize, ysize), layer = 0)
     return SquareEtch, ysize, xsize
                     
