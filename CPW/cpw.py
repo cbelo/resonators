@@ -94,7 +94,6 @@ def resonance_freq_CPW(width, spacing, epsilon_r, thickness_subs, ind_kin_sq, le
     C = cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs)
     L = ind_CPW_per_length(width, spacing, ind_kin_sq)
     vph = 1/np.sqrt(C*L)
-    print(length_CPW)
     f0 = vph/(2*np.pi*length_CPW)
     return f0
 
