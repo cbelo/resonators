@@ -260,7 +260,8 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
                         NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
                         TaperWidth, TaperLength, SpacingC0, SpacingCc,
-                        FinalSpacingBondpads = 100):
+                        FinalSpacingBondpads = 100,
+                        MWO_simulation = False):
     '''
     Creates the chip with the Tline and Schuster resonators. The origin is defined in the center of the chip.
     The resonators are placed alternating in the top and bottom of the feedline.
@@ -289,20 +290,20 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
     - FinalSpacingBondpads: Spacing between the bondpads and the edge of the chip. Neeeded for dicing.
     - FluxHoles: If True, adds holes in the ground plane to avoid magnetic flux losses.
+    - MWO_simulation: If True, only the metal parts are returned. If False, the metal, etching box, marker and negative plane are returned.
     '''
     # Layers
     ls = LayerSet()
-    ls.add_layer('Ground', gds_layer=0, color = 'red')
-    ls.add_layer('Metal', gds_layer=1, color = 'blue')
-    ls.add_layer('EtchingBox', gds_layer=2, color = 'orange')
-    ls.add_layer('Marker', gds_layer=3, color = 'green')
-    ls.add_layer('NegativePlane', gds_layer=4, color = 'black')
+    ls.add_layer('Metal', gds_layer=0, color = 'red')
+    ls.add_layer('EtchingBox', gds_layer=1, color = 'orange')
+    ls.add_layer('Marker', gds_layer=2, color = 'green')
+    ls.add_layer('NegativePlane', gds_layer=3, color = 'black')
     # if Chipsize[0] != (FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + 2*FinalSpacingBondpads):
     #     raise ValueError(f'The chip size length ({Chipsize[0]}um) is not equal to the sum of the feedline, bondpads and spacings ({FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + 2*FinalSpacingBondpads}um)')
     
     #Origin will be defined in the center of the chip
     Chip = Device('Chip')
-    Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Ground']).get_polygons())
+    Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Metal']).get_polygons())
     Chip.move(destination = (-Chipsize[0]/2, -Chipsize[1]/2)) #Center The chip
     
     # Devices for the resonators and Tline metal and gap parts
@@ -355,7 +356,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
         D_gap.add_ref(Etch)
     
     #Final spacing bondpads
-    BondpadSpacingLeft = pg.rectangle(size = (FinalSpacingBondpads, 2*BondpadGap + BondpadWidth), layer = ls['Ground'])
+    BondpadSpacingLeft = pg.rectangle(size = (FinalSpacingBondpads, 2*BondpadGap + BondpadWidth), layer = ls['Metal'])
     BondpadSpacingLeft.move(destination = (-FeedlineLength/2 - FeedlineTaperLength - BondpadLength - FinalSpacingBondpads, -BondpadGap - BondpadWidth/2))
     BondpadSpacingRight = BondpadSpacingLeft.copy('BondpadSpacingRight', translation=[(FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + FinalSpacingBondpads),0])
     D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
@@ -363,7 +364,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
 
     #Final chip structure
     Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
-    EtchingBoxNegative = pg.rectangle(size = (Chipsize[0]+2*FinalSpacingBondpads, Chipsize[1] + 2*FinalSpacingBondpads), layer = ls['Ground'])
+    EtchingBoxNegative = pg.rectangle(size = (Chipsize[0]+2*FinalSpacingBondpads, Chipsize[1] + 2*FinalSpacingBondpads), layer = ls['Metal'])
     EtchingBoxNegative.move(destination = (-Chipsize[0]/2 -FinalSpacingBondpads , -Chipsize[1]/2 - FinalSpacingBondpads)) #Center The chip
     EtchingBox = pg.boolean(EtchingBoxNegative, Chip, operation = 'not')
     Marker = pg.rectangle(size = (200, 200), layer = ls['Marker'])
@@ -372,14 +373,18 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     # pg.xor_diff(Chip, D_gap)
 
     FinalChip = Device('FinalChip')
-    FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Ground'])
-    FinalChip.add_polygon(EtchingBox.get_polygons(), layer = ls['EtchingBox'])
-    FinalChip.add_polygon(Marker.get_polygons(), layer = ls['Marker'])
+    FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Metal'])
     FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
-    FinalChip.add_polygon(Chip.get_polygons(), layer = ls['NegativePlane'])
-    
+    if MWO_simulation:
+        return Ground_Plane, D_metal, FinalChip
+    else:
+        FinalChip.add_polygon(EtchingBox.get_polygons(), layer = ls['EtchingBox'])
+        FinalChip.add_polygon(Marker.get_polygons(), layer = ls['Marker'])
+        
+        FinalChip.add_polygon(Chip.get_polygons(), layer = ls['NegativePlane'])
+        
 
-    return Ground_Plane, D_metal, FinalChip
+        return Ground_Plane, D_metal, FinalChip
 
 
 def ChipTline(Chipsize,

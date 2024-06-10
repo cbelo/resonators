@@ -211,9 +211,9 @@ def resonance_freq_Schuster(width_cap, horizontal_length_cap, distance_to_feedli
     Cg = cap_ground(width_cap, vertical_length_cap, distance_to_ground_cap, epsilon_r, thickness_subs)
     distance_to_ground_ind = distance_to_ground_cap + horizontal_length_cap/2 + width_cap/2
     Lg = ind_ground_total(width_ind, length_ind, distance_to_ground_ind, ind_kin_sq)
-    print(f' Lg: {Lg*1e9} nH')
-    print(f' Cg: {1e15*Cg} fF')
-    print(f' Cc: {1e15*Cc} fF')
+    # print(f' Lg: {Lg*1e9} nH')
+    # print(f' Cg: {1e15*Cg} fF')
+    # print(f' Cc: {1e15*Cc} fF')
     return 1/(2*np.pi*np.sqrt(Lg*(Cc+Cg)))
 
 
