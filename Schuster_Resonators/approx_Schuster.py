@@ -68,7 +68,7 @@ def C_air_asymmetric_stripline(w1, w2, s):
     k0_prime = np.sqrt(1-k0**2)
     K0 = ellipk(k0)
     K0_prime = ellipk(k0_prime)
-    C_air = 2*pyc.epsilon_0*K0_prime/K0
+    C_air = 2*pyc.epsilon_0*(K0_prime/K0)**(-1)
     return C_air
 
 def C_air_stripline_to_infinite_ground(w, s):
@@ -79,7 +79,7 @@ def C_air_stripline_to_infinite_ground(w, s):
     k0_prime = np.sqrt(1-k0**2)
     K0 = ellipk(k0)
     K0_prime = ellipk(k0_prime)
-    C_air = 2*pyc.epsilon_0*K0_prime/K0
+    C_air = 2*pyc.epsilon_0*(K0_prime/K0)
     return C_air
 
 def cap_coupling(width_cap, horizontal_length_cap, distance_to_feedline, width_feedline, epsilon_r, thickness_subs):
@@ -116,8 +116,8 @@ def cap_coupling(width_cap, horizontal_length_cap, distance_to_feedline, width_f
             e_r = epsilon_r[i]-1
         else:
             e_r = epsilon_r[i]-epsilon_r[i+1]
-            
-        cap = pyc.epsilon_0*e_r*K_prime/K
+        print(K_prime/K)
+        cap = pyc.epsilon_0*e_r*(K_prime/K)
         
         capacitance_contributions.append(cap*horizontal_length_cap)
     return sum(capacitance_contributions)
@@ -154,7 +154,7 @@ def cap_ground(width_cap, vertical_length_cap, distance_to_ground, epsilon_r, th
             e_r = epsilon_r[i]-1
         else:
             e_r = epsilon_r[i]-epsilon_r[i+1]
-        cap = pyc.epsilon_0*e_r*K_prime/K
+        cap = pyc.epsilon_0*e_r*(K_prime/K)
         capacitance_contributions.append(cap*vertical_length_cap*2)
     # print(capacitance_contributions)
     return sum(capacitance_contributions)

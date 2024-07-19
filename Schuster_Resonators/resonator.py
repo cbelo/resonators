@@ -120,6 +120,7 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
 
     #Origin defined in the middle of the capacitor
     #Capacitor section
+
     Cap_Poly = CapacitorSection(CapacitorHorizontalLength,
                                 CapacitorVerticalLength,
                                 CapacitorWidth,
@@ -172,7 +173,7 @@ def CapacitorSection(CapacitorHorizontalLength,
                        (-CapacitorHorizontalLength/2, 0),
                        (CapacitorHorizontalLength/2, 0),
                       (CapacitorHorizontalLength/2, -CapacitorVerticalLength + CapacitorWidth/2)])
-    PathCapacitor = pp.smooth(points, radius = CapacitorWidth)
+    PathCapacitor = pp.smooth(points, radius = CapacitorWidth*0.5)
     PolyCapacitor = PathCapacitor.extrude(width = CapacitorWidth, simplify=1e-6, layer = 0)
     
     #Make the corners of the capacitor smooth
@@ -204,7 +205,6 @@ def InductorSection(NumberOfBends,
     #Create a path for the inductor. Origin defined on the top of the inductor
     #Which will be connected to the port of the CapacitorSection
     points = [(0,0), (0, -InductorVerticalLength)]
-
     # Add points of the bend. Each bend is composed of 4 points that make an S-shape
     for i in range(0,NumberOfBends+1, 2):
         points.append((-InductorHorizontalLength/2, -InductorVerticalLength*(i+1)))
@@ -213,12 +213,17 @@ def InductorSection(NumberOfBends,
         points.append((InductorHorizontalLength/2, -InductorVerticalLength*(i+3)))
         points.append((0, -InductorVerticalLength*(i+3)))
     #Add the last straight section
-    points.append((0, -InductorVerticalLength*(NumberOfBends+4) - EndLength))
-    
+    if NumberOfBends==-1:
+        points.append((0, -InductorVerticalLength - EndLength))
+        StraightLength = InductorVerticalLength + EndLength
+        PathInductor = pp.straight(length = StraightLength)
+        PathInductor.rotate(-90)
+    else:
+        points.append((0, -InductorVerticalLength*(NumberOfBends+4) - EndLength)) #Should be +3!!!! Change later
+        StraightLength = InductorVerticalLength*(NumberOfBends+4) + EndLength
+        # TotalLength =  StraigthLength + InductorHorizontalLength*NumberOfBends
+        PathInductor = pp.smooth(points, radius = InductorWidth*1)
 
-    StraightLength = InductorVerticalLength*(NumberOfBends+4) + EndLength
-    # TotalLength =  StraigthLength + InductorHorizontalLength*NumberOfBends
-    PathInductor = pp.smooth(points, radius = InductorWidth*2)
     PolyInductor = PathInductor.extrude(width = InductorWidth, simplify=1e-1, layer = 0)
     PolyInductor.add_port(name = 'Top', midpoint=(0, 0), orientation = 90, width = InductorWidth)
     return PolyInductor, StraightLength
