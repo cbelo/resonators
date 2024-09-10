@@ -55,7 +55,7 @@ def fun_k_stripline_to_infinite_ground(w,s,h):
     if np.pi*w/h > 709:
         k = np.sqrt(np.exp(-np.pi*s/h))
     else:
-        num = np.exp(np.pi*w/h) -1
+        num = np.array(np.exp(np.pi*w/h) -1)
         den = np.exp(np.pi*(w+s)/h) -1
         k = np.sqrt(num/den)
     return k
@@ -68,18 +68,23 @@ def C_air_asymmetric_stripline(w1, w2, s):
     k0_prime = np.sqrt(1-k0**2)
     K0 = ellipk(k0)
     K0_prime = ellipk(k0_prime)
-    C_air = 2*pyc.epsilon_0*(K0_prime/K0)**(-1)
+    C_air = 2*pyc.epsilon_0*(K0_prime/K0)#**(-1)
     return C_air
 
 def C_air_stripline_to_infinite_ground(w, s):
     '''
     Returns the capacitance through air of the Schuster resonator to the ground.
     '''
+    # print('Air distance',s)
+    # print('Air width',w)
+    ### From simmons book 
     k0 = np.sqrt(w/(w+s))
     k0_prime = np.sqrt(1-k0**2)
+
     K0 = ellipk(k0)
     K0_prime = ellipk(k0_prime)
-    C_air = 2*pyc.epsilon_0*(K0_prime/K0)
+    C_air = 2*pyc.epsilon_0*(K0_prime/K0)#**(-1) 
+    # print(f' C_air: {C_air*1e12} pF/m')
     return C_air
 
 def cap_coupling(width_cap, horizontal_length_cap, distance_to_feedline, width_feedline, epsilon_r, thickness_subs):
@@ -116,7 +121,7 @@ def cap_coupling(width_cap, horizontal_length_cap, distance_to_feedline, width_f
             e_r = epsilon_r[i]-1
         else:
             e_r = epsilon_r[i]-epsilon_r[i+1]
-        print(K_prime/K)
+        # print(K_prime/K)
         cap = pyc.epsilon_0*e_r*(K_prime/K)
         
         capacitance_contributions.append(cap*horizontal_length_cap)
@@ -132,7 +137,9 @@ def cap_ground(width_cap, vertical_length_cap, distance_to_ground, epsilon_r, th
     #Define simpler variables
     s = distance_to_ground
     w = width_cap
-
+    # print('Co distance',distance_to_ground)
+    # print('Co width',width_cap)
+    # print('Co vertical',vertical_length_cap)
     if isinstance(epsilon_r, (int, float)):
         epsilon_r = np.array([epsilon_r])
         thickness_subs = np.array([thickness_subs])
@@ -154,7 +161,7 @@ def cap_ground(width_cap, vertical_length_cap, distance_to_ground, epsilon_r, th
             e_r = epsilon_r[i]-1
         else:
             e_r = epsilon_r[i]-epsilon_r[i+1]
-        cap = pyc.epsilon_0*e_r*(K_prime/K)
+        cap = pyc.epsilon_0*(e_r)*(K_prime/K)#**(-1)
         capacitance_contributions.append(cap*vertical_length_cap*2)
     # print(capacitance_contributions)
     return sum(capacitance_contributions)

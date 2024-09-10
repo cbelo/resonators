@@ -303,6 +303,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     ls.add_layer('EtchingBox', gds_layer=1, color = 'orange')
     ls.add_layer('Marker', gds_layer=2, color = 'green')
     ls.add_layer('NegativePlane', gds_layer=3, color = 'black')
+    ls.add_layer('Resonators', gds_layer=4, color = 'blue')
     # if Chipsize[0] != (FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + 2*FinalSpacingBondpads):
     #     raise ValueError(f'The chip size length ({Chipsize[0]}um) is not equal to the sum of the feedline, bondpads and spacings ({FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + 2*FinalSpacingBondpads}um)')
     
@@ -314,6 +315,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     # Devices for the resonators and Tline metal and gap parts
     D_metal = Device('Metal')
     D_gap = Device('Gap')
+    D_resonators = Device('Resonators')
     
     #Tline in the center of the chip
     TlineMetal, TlineGap = Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
@@ -357,7 +359,8 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
         Etch.movex(xpos[i])
         Etch.movey(ypos)
         sign = -sign
-        D_metal.add_polygon(Resonator.get_polygons())
+        # D_metal.add_polygon(Resonator.get_polygons())
+        D_resonators.add_polygon(Resonator.get_polygons())
         D_gap.add_ref(Etch)
     
     #Final spacing bondpads
@@ -380,6 +383,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     FinalChip = Device('FinalChip')
     FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Metal'])
     FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
+    FinalChip.add_polygon(D_resonators.get_polygons(), layer = ls['Resonators'])
     if MWO_simulation:
         return Ground_Plane, D_metal, FinalChip
     else:
