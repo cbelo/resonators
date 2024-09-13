@@ -97,7 +97,8 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                             TaperLength,
                             SpacingC0, 
                             SpacingCc,
-                            calib = False):
+                            calib = False, 
+                            cap_sim = False):
     '''
     Creates the Schuster resonator with the capacitors and inductors.
     Parameters:
@@ -114,6 +115,7 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
     - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
     - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
     - calib : If True, it returns the different polygons in different layers.
+    - cap_sim: If True, it returns the inductor section with a little cut to ground, so capacitive simulations can be done.
     '''
     
     D = Device()
@@ -133,6 +135,8 @@ def SchusterResonatorSmooth(CapacitorHorizontalLength,
                                                         InductorEndLength,
                                                         InductorWidth)
     Ind_Poly.move(destination = (0, -CapacitorWidth/2 - TaperLength))
+    if cap_sim:
+        Ind_Poly.move(destination = (0, 0.1))
     Dind = D << Ind_Poly
 
     # Taper section between inductor and capacitor
@@ -266,7 +270,8 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
                         TaperWidth, TaperLength, SpacingC0, SpacingCc,
                         FinalSpacingBondpads = 100,
-                        MWO_simulation = False):
+                        MWO_simulation = False,
+                        cap_sim = False):
     '''
     Creates the chip with the Tline and Schuster resonators. The origin is defined in the center of the chip.
     The resonators are placed alternating in the top and bottom of the feedline.
@@ -296,6 +301,8 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     - FinalSpacingBondpads: Spacing between the bondpads and the edge of the chip. Neeeded for dicing.
     - FluxHoles: If True, adds holes in the ground plane to avoid magnetic flux losses.
     - MWO_simulation: If True, only the metal parts are returned. If False, the metal, etching box, marker and negative plane are returned.
+    - cap_sim: If True, it returns the inductor section with a little cut to ground, so capacitive simulations can be done.
+
     '''
     # Layers
     ls = LayerSet()
@@ -346,7 +353,8 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                                                   TaperWidth[i],
                                                   TaperLength[i],
                                                   SpacingC0[i], 
-                                                  SpacingCc[i])
+                                                  SpacingCc[i], 
+                                                  cap_sim = cap_sim)
         
         if sign == 1:
             Resonator.rotate(180)
