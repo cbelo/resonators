@@ -316,6 +316,9 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     
     #Origin will be defined in the center of the chip
     Chip = Device('Chip')
+    if cap_sim:
+        FinalSpacingBondpads = 5
+        Chipsize[0] = Chipsize[0] + 2*BondpadGap+50
     Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Metal']).get_polygons())
     Chip.move(destination = (-Chipsize[0]/2, -Chipsize[1]/2)) #Center The chip
     
@@ -372,11 +375,12 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
         D_gap.add_ref(Etch)
     
     #Final spacing bondpads
-    BondpadSpacingLeft = pg.rectangle(size = (FinalSpacingBondpads, 2*BondpadGap + BondpadWidth), layer = ls['Metal'])
-    BondpadSpacingLeft.move(destination = (-FeedlineLength/2 - FeedlineTaperLength - BondpadLength - FinalSpacingBondpads, -BondpadGap - BondpadWidth/2))
-    BondpadSpacingRight = BondpadSpacingLeft.copy('BondpadSpacingRight', translation=[(FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + FinalSpacingBondpads),0])
-    D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
-    D_gap.add_polygon(BondpadSpacingRight.get_polygons())
+    if not cap_sim:
+        BondpadSpacingLeft = pg.rectangle(size = (FinalSpacingBondpads, 2*BondpadGap + BondpadWidth), layer = ls['Metal'])
+        BondpadSpacingLeft.move(destination = (-FeedlineLength/2 - FeedlineTaperLength - BondpadLength - FinalSpacingBondpads, -BondpadGap - BondpadWidth/2))
+        BondpadSpacingRight = BondpadSpacingLeft.copy('BondpadSpacingRight', translation=[(FeedlineLength + 2*FeedlineTaperLength + 2*BondpadLength + FinalSpacingBondpads),0])
+        D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
+        D_gap.add_polygon(BondpadSpacingRight.get_polygons())
 
     #Final chip structure
     Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
