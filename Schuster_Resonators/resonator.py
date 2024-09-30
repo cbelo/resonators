@@ -371,7 +371,17 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
         Etch.movey(ypos)
         sign = -sign
         # D_metal.add_polygon(Resonator.get_polygons())
-        D_resonators.add_polygon(Resonator.get_polygons())
+        # pols = Resonator.get_polygons()
+        # pols.merge()
+        # one_pol = pg.kl_boolean(A = Resonator.get_polygons(),B = Resonator.get_polygons(),  operation='A+B')
+        # print(len(one_pol.get_polygons()))
+        temp = Device('temp')
+        temp.add_polygon(Resonator.get_polygons())
+        # D_resonators.add_polygon(Resonator.get_polygons())
+        # print(len(D_resonators.get_polygons()))
+        one_pol = pg.kl_boolean(A = temp,B = temp,  operation='A+B')
+        D_resonators.add_polygon(one_pol.get_polygons())
+        # D_resonators.add_polygon(Resonator.get_polygons())
         D_gap.add_ref(Etch)
     
     #Final spacing bondpads
@@ -396,7 +406,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Metal'])
     FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
     FinalChip.add_polygon(D_resonators.get_polygons(), layer = ls['Resonators'])
-    if MWO_simulation:
+    if MWO_simulation or cap_sim:
         return Ground_Plane, D_metal, FinalChip
     else:
         FinalChip.add_polygon(EtchingBox.get_polygons(), layer = ls['EtchingBox'])
