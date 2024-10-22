@@ -388,7 +388,8 @@ def FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads,
         
         FinalChip.add_polygon(Chip.get_polygons(), layer = ls['NegativePlane'])
     return Ground_Plane, D_metal, FinalChip
-               
+
+
 def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         FeedlineWidth, FeedlineLength, FeedlineGap, 
                         FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
@@ -428,7 +429,84 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
     - FluxHoles: If True, adds holes in the ground plane to avoid magnetic flux losses.
     - MWO_simulation: If True, only the metal parts are returned. If False, the metal, etching box, marker and negative plane are returned.
     - cap_sim: If True, it returns the inductor section with a little cut to ground, so capacitive simulations can be done.
+    '''
 
+    # Layers
+    ls = set_layers()
+
+    #Chip
+    Chip = chip_definition(cap_sim, Chipsize, BondpadGap, ls)
+    
+    # Devices for the resonators and Tline metal and gap parts
+    D_metal = Device('Metal')
+    D_gap = Device('Gap')
+    D_resonators = Device('Resonators')
+
+    #Tline with resonators
+    TlineMetal, TlineGap, BondpadSpacingLeft, BondpadSpacingRight = Tline_position(FeedlineWidth, FeedlineLength, FeedlineGap, 
+                    FeedlineTaperLength, BondpadWidth, BondpadLength, 
+                    BondpadGap, MWO_simulation, 0,
+                    cap_sim, FinalSpacingBondpads, ls)
+    
+    D_metal.add_ref(TlineMetal)
+    D_gap.add_ref(TlineGap)
+    if  BondpadSpacingRight is not None:
+        D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
+        D_gap.add_polygon(BondpadSpacingRight.get_polygons())
+
+    # Resonators
+    D_resonators, D_gap = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator,
+                     CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
+                    NumberOfBends, InductorVerticalLength, InductorHorizontalLength,
+                    InductorWidth, InductorEndLength, TaperWidth, TaperLength,
+                    SpacingC0, SpacingCc, cap_sim,
+                    D_resonators, D_gap, 0 )
+    
+    #Final chip structure
+    Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads, Chipsize, ls,
+                       MWO_simulation, cap_sim)
+
+    return Ground_Plane, D_metal, FinalChip
+
+def ChipResonatorsTline_oldVersion(Chipsize, NumberOfResonators, SeparationTlineResonator,
+                        FeedlineWidth, FeedlineLength, FeedlineGap, 
+                        FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
+                        CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
+                        NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
+                        TaperWidth, TaperLength, SpacingC0, SpacingCc,
+                        FinalSpacingBondpads = 100,
+                        MWO_simulation = False,
+                        cap_sim = False):
+    '''
+    Creates the chip with the Tline and Schuster resonators. The origin is defined in the center of the chip.
+    The resonators are placed alternating in the top and bottom of the feedline.
+    Parameters:
+    - Chipsize: Size of the chip
+    - NumberOfResonators: Number of resonators
+    - SeparationTlineResonator: Separation between the feedline and the etching box of the resonators. This spacing is metal.
+    - FeedlineWidth: Width of the feedline
+    - FeedlineLength: Length of the feedline
+    - FeedlineGap: Gap of the feedline
+    - FeedlineTaperLength: Length of the taper sections which connect the main feedline to the bondpads
+    - BondpadWidth: Width of the bondpads
+    - BondpadLength: Length of the bondpads
+    - BondpadGap: Gap of the bondpads
+    - CapacitorHorizontalLength: Horizontal length of the capacitor, which defines Cc
+    - CapacitorVerticalLength: Vertical length of the capacitor, which defines C0
+    - CapacitorWidth: Width of the capacitor
+    - NumberOfBends: Number of bends in the inductor
+    - InductorVerticalLength: Vertical length of the inductor bend
+    - InductorHorizontalLength: Horizontal length of the inductor bend
+    - InductorWidth: Width of the inductor
+    - InductorEndLength: Length of the straight section at the end of the inductor, which connects to ground
+    - TaperWidth: Width of the taper section between the inductor and the horizontal section of the capacitor
+    - TaperLength: Length of the taper section between the inductor and and the horizontal section of the capacitor
+    - SpacingC0: Spacing between the vertical section of the capacitor to ground. Defines C0
+    - SpacingCc: Spacing between the horizontal section of the capacitor and the end of the etch box around the resonator. Defines Cc
+    - FinalSpacingBondpads: Spacing between the bondpads and the edge of the chip. Neeeded for dicing.
+    - FluxHoles: If True, adds holes in the ground plane to avoid magnetic flux losses.
+    - MWO_simulation: If True, only the metal parts are returned. If False, the metal, etching box, marker and negative plane are returned.
+    - cap_sim: If True, it returns the inductor section with a little cut to ground, so capacitive simulations can be done.
     '''
     # Layers
     ls = LayerSet()
@@ -554,6 +632,15 @@ def ChipResonatorsTwoTlines(Chipsize, NumberOfResonators, SeparationTlineResonat
                         cap_sim = False,
                         ypos_tlines = [0,0]):
     
+    '''
+    Creates the chip with two Tlines - the first one with resonators and the second one without resonators.
+    The origin is defined in the center of the chip.
+
+    Parameters:
+    (same as ChipTlineResonators)
+    - ypos_tlines: Y position of the Tlines. The first element is the Tline with resonators and the second element is the Tline without resonators.
+    '''
+    
     # Layers
     ls = set_layers()
 
@@ -615,8 +702,15 @@ def ChipResonatorsThreeTlines(Chipsize, NumberOfResonators, SeparationTlineReson
                         FinalSpacingBondpads = 100,
                         MWO_simulation = False,
                         cap_sim = False,
-                        ypos_tlines = [0,0]):
-    
+                        ypos_tlines = [0,0,0]):
+    '''
+    Creates the chip with three Tlines - the first two with resonators and the third one without resonators.
+    The origin is defined in the center of the chip.
+
+    Parameters:
+    (same as ChipTlineResonators)
+    - ypos_tlines: Y position of the Tlines. The first and second elements are the Tline with resonators and the third element is the Tline without resonators.
+    '''
     # Layers
     ls = set_layers()
 
