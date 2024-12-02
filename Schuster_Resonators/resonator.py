@@ -321,7 +321,7 @@ def place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineG
     if NumberOfResonators == 1:
         xpos = [0]
     else:
-        xpos = np.linspace(-0.4*FeedlineLength, 0.4*FeedlineLength , NumberOfResonators)
+        xpos = np.linspace(-0.3*FeedlineLength, 0.3*FeedlineLength , NumberOfResonators)
     # ypos_abs = FeedlineWidth/2 + FeedlineGap + SeparationTlineResonator + SpacingCc + CapacitorWidth/2
     sign = 1
 
