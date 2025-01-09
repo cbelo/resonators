@@ -317,11 +317,11 @@ def place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineG
                     NumberOfBends, InductorVerticalLength, InductorHorizontalLength,
                     InductorWidth, InductorEndLength, TaperWidth, TaperLength,
                     SpacingC0, SpacingCc, cap_sim,
-                    D_resonators, D_gap, ypos_Tline):
+                    D_resonators, D_gap, ypos_Tline, EdgeResDistanceFactor = 0.3):
     if NumberOfResonators == 1:
         xpos = [0]
     else:
-        xpos = np.linspace(-0.3*FeedlineLength, 0.3*FeedlineLength , NumberOfResonators)
+        xpos = np.linspace(-EdgeResDistanceFactor*FeedlineLength, EdgeResDistanceFactor*FeedlineLength , NumberOfResonators)
     # ypos_abs = FeedlineWidth/2 + FeedlineGap + SeparationTlineResonator + SpacingCc + CapacitorWidth/2
     sign = 1
 
@@ -398,7 +398,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                         TaperWidth, TaperLength, SpacingC0, SpacingCc,
                         FinalSpacingBondpads = 100,
                         MWO_simulation = False,
-                        cap_sim = False):
+                        cap_sim = False, EdgeResDistanceFactor = 0.3):
     '''
     Creates the chip with the Tline and Schuster resonators. The origin is defined in the center of the chip.
     The resonators are placed alternating in the top and bottom of the feedline.
@@ -460,7 +460,7 @@ def ChipResonatorsTline(Chipsize, NumberOfResonators, SeparationTlineResonator,
                     NumberOfBends, InductorVerticalLength, InductorHorizontalLength,
                     InductorWidth, InductorEndLength, TaperWidth, TaperLength,
                     SpacingC0, SpacingCc, cap_sim,
-                    D_resonators, D_gap, 0 )
+                    D_resonators, D_gap, 0 , EdgeResDistanceFactor)
     
     #Final chip structure
     Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads, Chipsize, ls,
@@ -630,7 +630,8 @@ def ChipResonatorsTwoTlines(Chipsize, NumberOfResonators, SeparationTlineResonat
                         FinalSpacingBondpads = 100,
                         MWO_simulation = False,
                         cap_sim = False,
-                        ypos_tlines = [0,0]):
+                        ypos_tlines = [0,0],
+                        EdgeResDistanceFactor = 0.3):
     
     '''
     Creates the chip with two Tlines - the first one with resonators and the second one without resonators.
@@ -683,7 +684,7 @@ def ChipResonatorsTwoTlines(Chipsize, NumberOfResonators, SeparationTlineResonat
                     NumberOfBends, InductorVerticalLength, InductorHorizontalLength,
                     InductorWidth, InductorEndLength, TaperWidth, TaperLength,
                     SpacingC0, SpacingCc, cap_sim,
-                    D_resonators, D_gap, ypos_tlines[0] )
+                    D_resonators, D_gap, ypos_tlines[0], EdgeResDistanceFactor)
     
     #Final chip structure
     Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads, Chipsize, ls,
