@@ -236,7 +236,7 @@ def InductorSection(NumberOfBends,
         # TotalLength =  StraigthLength + InductorHorizontalLength*NumberOfBends
         PathInductor = pp.smooth(points, radius = InductorWidth*1)
 
-    PolyInductor = PathInductor.extrude(width = InductorWidth, simplify=1e-1, layer = 0)
+    PolyInductor = PathInductor.extrude(width = InductorWidth, simplify=1e-3, layer = 0)
     PolyInductor.add_port(name = 'Top', midpoint=(0, 0), orientation = 90, width = InductorWidth)
     return PolyInductor, StraightLength
     
