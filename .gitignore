@@ -163,3 +163,5 @@ cython_debug/
 mat_files/
 #Tests
 tests.ipynb
+RF-lines-Geri-22jan.ipynb
+test-lumped-snn.ipynb
