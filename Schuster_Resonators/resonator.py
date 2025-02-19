@@ -42,6 +42,7 @@ def Tline(FeedlineWidth, FeedlineLength, FeedlineGap,
 
     #Create the feedline and bonds. First polygon is metal, second is gap.
     # Origin defined in the left edge of the feedline
+
     feedline, _ = WaveGuideMaker(FeedlineWidth, FeedlineGap, FeedlineLength, ['In', 'Out'])
     bondpad, _ = WaveGuideMaker(BondpadWidth, BondpadGap, BondpadLength, ['In', 'Out'])
 
@@ -82,6 +83,12 @@ def Tline(FeedlineWidth, FeedlineLength, FeedlineGap,
     Dgap = Device('Tline_gap')
     if MWO_sim_single_res:
         Dgap.add_polygon(fl.get_polygons()[1])
+        #Add gap at the end of the bondpads
+        gap_l = pg.rectangle(size = (width, FeedlineWidth + 2*FeedlineGap), layer = 1)
+        gap_l.move((- width, -FeedlineWidth/2- FeedlineGap))
+        gap_r = pg.rectangle(size = (width, FeedlineWidth+ 2*FeedlineGap), layer = 1)
+        gap_r.move(( FeedlineLength, -FeedlineWidth/2 - FeedlineGap))
+        Dgap.add_polygon([gap_l.get_polygons(), gap_r.get_polygons()])
     else:
         Dgap.add_polygon([fl.get_polygons()[1], bp_l.get_polygons()[1], 
                             bp_r.get_polygons()[1], taper_l_gap.get_polygons(),
