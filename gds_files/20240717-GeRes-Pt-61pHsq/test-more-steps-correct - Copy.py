@@ -14,15 +14,18 @@ chipsize_in = 1100
 BondpadGap = 10.5747
 xsize = chipsize_in*0.001 + 2*BondpadGap*0.001 + 0.05
 xpos = -xsize/2
-
+xpos = '{:.6f}mm'.format(xpos)
+ypos = '{:.6f}mm'.format(ypos)
+xsize = '{:.6f}mm'.format(xsize)
+ysize = '{:.6f}mm'.format(ysize)
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "0mm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+		"YSize:="		, ysize,
 		"ZSize:="		, "-0.1mm"
 	], 
 	[
@@ -154,11 +157,11 @@ oEditor = oDesign.SetActiveEditor("3D Modeler")
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "0mm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+		"YSize:="		, ysize,
 		"ZSize:="		, "-0.1mm"
 	], 
 	[
@@ -194,8 +197,8 @@ oEditor.ChangeProperty(
 				"NAME:ChangedProps",
 				[
 					"NAME:Position",
-					"X:="			, "-0.335575mm",
-					"Y:="			, "-0.4mm",
+					"X:="			, xpos,
+					"Y:="			, ypos,
 					"Z:="			, "-2.2e-05mm"
 				]
 			]
@@ -218,11 +221,11 @@ oEditor.Subtract(
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "-22nm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+		"YSize:="		, ysize,
 		"ZSize:="		, "-16nm"
 	], 
 	[
@@ -268,11 +271,11 @@ oEditor.AssignMaterial(
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "-3.8e-05mm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+		"YSize:="		, ysize,
 		"ZSize:="		, "-1.9um"
 	], 
 	[
@@ -317,11 +320,11 @@ oEditor.AssignMaterial(
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "-0.001938mm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+		"YSize:="		, ysize,
 		"ZSize:="		, "-1.4um"
 	], 
 	[
@@ -366,11 +369,11 @@ oEditor.AssignMaterial(
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "-0.003338mm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+		"YSize:="		, ysize,
 		"ZSize:="		, "-525um"
 	], 
 	[
@@ -415,11 +418,11 @@ oEditor.AssignMaterial(
 oEditor.CreateBox(
 	[
 		"NAME:BoxParameters",
-		"XPosition:="		, "-0.335575mm",
-		"YPosition:="		, "-0.4mm",
+		"XPosition:="		, xpos,
+		"YPosition:="		, ypos,
 		"ZPosition:="		, "0mm",
-		"XSize:="		, "0.67115mm",
-		"YSize:="		, "0.8mm",
+		"XSize:="		, xsize,
+        "YSize:="		, ysize,
 		"ZSize:="		, "900um"
 	], 
 	[
