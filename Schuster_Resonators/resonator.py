@@ -286,6 +286,7 @@ def set_layers():
     ls.add_layer('Marker', gds_layer=2, color = 'green')
     ls.add_layer('NegativePlane', gds_layer=3, color = 'black')
     ls.add_layer('Resonators', gds_layer=4, color = 'blue')
+    ls.add_layer('Tline', gds_layer=5, color = 'yellow')
     return ls
 
 def chip_definition(cap_sim, Chipsize, BondpadGap, ls):
@@ -380,13 +381,14 @@ def FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads,
     EtchingBoxNegative = pg.rectangle(size = (Chipsize[0]+2*FinalSpacingBondpads, Chipsize[1] + 2*FinalSpacingBondpads), layer = ls['Metal'])
     EtchingBoxNegative.move(destination = (-Chipsize[0]/2 -FinalSpacingBondpads , -Chipsize[1]/2 - FinalSpacingBondpads)) #Center The chip
     EtchingBox = pg.boolean(EtchingBoxNegative, Chip, operation = 'not')
-    Marker = pg.rectangle(size = (200, 200), layer = ls['Marker'])
-    Marker.move(destination = (-Chipsize[0]/2 + 300, -Chipsize[1]/2 + 200))
+    Marker = pg.rectangle(size = (1000, 100), layer = ls['Marker'])
+    Marker.move(destination = (-Chipsize[0]/2 + 1500, -Chipsize[1]/2 + 200))
 
     FinalChip = Device('FinalChip')
     FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Metal'])
-    FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Metal'])
-    FinalChip.add_polygon(D_resonators.get_polygons(), layer = ls['Resonators'])
+    FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Tline'])
+    if D_resonators is not None:
+        FinalChip.add_polygon(D_resonators.get_polygons(), layer = ls['Resonators'])
     if MWO_simulation or cap_sim:
         return Ground_Plane, D_metal, FinalChip
     else:
@@ -778,7 +780,7 @@ def ChipResonatorsThreeTlines(Chipsize, NumberOfResonators, SeparationTlineReson
                     D_resonators, D_gap, ypos_tlines[0] )
     
     #Resonators2
-    D_resonators2, D_gap2 = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator,
+    D_resonators, D_gap = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator,
                      CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
                     NumberOfBends, InductorVerticalLength, InductorHorizontalLength,
                     InductorWidth, InductorEndLength, TaperWidth, TaperLength,
@@ -786,11 +788,100 @@ def ChipResonatorsThreeTlines(Chipsize, NumberOfResonators, SeparationTlineReson
                     D_resonators, D_gap, ypos_tlines[1] )
     
     #Final chip structure
-    Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap2, D_metal, D_resonators2, FinalSpacingBondpads, Chipsize, ls,
+    Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads, Chipsize, ls,
                        MWO_simulation, cap_sim)
 
     return Ground_Plane, D_metal, FinalChip
 
+def include_Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
+                    FeedlineTaperLength, BondpadWidth, BondpadLength, 
+                    BondpadGap, MWO_simulation, ypos_tlines,
+                    cap_sim, FinalSpacingBondpads, ls, D_metal, D_gap, BondpadSpacingRight, BondpadSpacingLeft):
+    
+    TlineMetal, TlineGap, BondpadSpacingLeft, BondpadSpacingRight = Tline_position(FeedlineWidth, FeedlineLength, FeedlineGap, 
+                    FeedlineTaperLength, BondpadWidth, BondpadLength, 
+                    BondpadGap, MWO_simulation, ypos_tlines,
+                    cap_sim, FinalSpacingBondpads, ls)
+
+    D_metal.add_ref(TlineMetal)
+    D_gap.add_ref(TlineGap)
+    if  BondpadSpacingRight is not None:
+        D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
+        D_gap.add_polygon(BondpadSpacingRight.get_polygons())
+    return D_metal, D_gap
+
+def ChipAndersen(Chipsize, NumberOfResonators, SeparationTlineResonator,
+                        FeedlineWidth, FeedlineLength, FeedlineGap, 
+                        FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap,
+                        CapacitorHorizontalLength, CapacitorVerticalLength, CapacitorWidth,
+                        NumberOfBends, InductorVerticalLength, InductorHorizontalLength, InductorWidth,InductorEndLength,
+                        TaperWidth, TaperLength, SpacingC0, SpacingCc,
+                        FinalSpacingBondpads = 100,
+                        MWO_simulation = False,
+                        cap_sim = False,
+                        ypos_tlines = [0,0,0]):
+    ''' Creates the chip for 9x9 chip with 5 Tlines. 1 without resonators, 2 with a set of resonators and other two with another set of resonators the Andersen resonators and Tline.
+      The origin is defined in the center of the chip.
+    The resonators are placed alternating in the top and bottom of the feedline.
+    The parameters of the resonators are tuples with the parameters of the two sets of resonators.
+    '''
+    # Layers
+    ls = set_layers()
+
+    #Chip
+    Chip = chip_definition(cap_sim, Chipsize, BondpadGap, ls)
+    
+    # Devices for the resonators and Tline metal and gap parts
+    D_metal = Device('Metal')
+    D_gap = Device('Gap')
+    D_resonators = Device('Resonators')
+    
+    #Tlines 
+    for ypos in ypos_tlines:
+        D_metal, D_gap = include_Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
+                        FeedlineTaperLength, BondpadWidth, BondpadLength, 
+                        BondpadGap, MWO_simulation, ypos,
+                        cap_sim, FinalSpacingBondpads, ls, D_metal, D_gap, BondpadSpacingRight = None, BondpadSpacingLeft = None)
+    
+
+
+    # Set of resonators 1
+    D_resonators, D_gap = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator[0],
+                     CapacitorHorizontalLength[0], CapacitorVerticalLength[0], CapacitorWidth[0],
+                    NumberOfBends[0], InductorVerticalLength[0], InductorHorizontalLength[0],
+                    InductorWidth[0], InductorEndLength[0], TaperWidth[0], TaperLength[0],
+                    SpacingC0[0], SpacingCc[0], cap_sim,
+                    D_resonators, D_gap, ypos_tlines[0] )
+    
+    # Set of resonators 1 again
+    D_resonators, D_gap = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator[0],
+                     CapacitorHorizontalLength[0], CapacitorVerticalLength[0], CapacitorWidth[0],
+                    NumberOfBends[0], InductorVerticalLength[0], InductorHorizontalLength[0],
+                    InductorWidth[0], InductorEndLength[0], TaperWidth[0], TaperLength[0],
+                    SpacingC0[0], SpacingCc[0], cap_sim,
+                    D_resonators, D_gap, ypos_tlines[1] )
+    
+    # Set of resonators 2
+    D_resonators, D_gap = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator[1],
+                     CapacitorHorizontalLength[1], CapacitorVerticalLength[1], CapacitorWidth[1],
+                    NumberOfBends[1], InductorVerticalLength[1], InductorHorizontalLength[1],
+                    InductorWidth[1], InductorEndLength[1], TaperWidth[1], TaperLength[1],
+                    SpacingC0[1], SpacingCc[1], cap_sim,
+                    D_resonators, D_gap, ypos_tlines[2] )
+    
+    # Set of resonators 2 again
+    D_resonators, D_gap = place_resonators(NumberOfResonators,FeedlineLength, FeedlineWidth, FeedlineGap, SeparationTlineResonator[1],
+                     CapacitorHorizontalLength[1], CapacitorVerticalLength[1], CapacitorWidth[1],
+                    NumberOfBends[1], InductorVerticalLength[1], InductorHorizontalLength[1],
+                    InductorWidth[1], InductorEndLength[1], TaperWidth[1], TaperLength[1],
+                    SpacingC0[1], SpacingCc[1], cap_sim,
+                    D_resonators, D_gap, ypos_tlines[3] )
+
+    #Final chip structure
+    Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads, Chipsize, ls,
+                       MWO_simulation, cap_sim)
+
+    return Ground_Plane, D_metal, FinalChip
 
 
 def ChipTline(Chipsize,
@@ -811,32 +902,65 @@ def ChipTline(Chipsize,
 
     
     # Layers
-    ls = LayerSet()
-    ls.add_layer('Ground', gds_layer=0, color = 'red')
-    ls.add_layer('Metal', gds_layer=1, color = 'blue')
+    ls = set_layers()
 
-    #Origin will be defined in the center of the chip
-    Chip = Device('Chip')
-    Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Ground']).get_polygons())
-    Chip.move(destination = (-Chipsize[0]/2, -Chipsize[1]/2)) #Center The chip
+    #Chip
+    Chip = chip_definition(False, Chipsize, BondpadGap, ls)
     
     # Devices for the resonators and Tline metal and gap parts
     D_metal = Device('Metal')
     D_gap = Device('Gap')
-    
-    #Tline in the center of the chip
-    TlineMetal, TlineGap = Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
-                                 FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap)
-    TlineMetal.movex(-FeedlineLength/2)
-    TlineGap.movex(-FeedlineLength/2)
+    D_resonators = Device('Resonators')
 
+    #Tline with resonators
+    TlineMetal, TlineGap, BondpadSpacingLeft, BondpadSpacingRight = Tline_position(FeedlineWidth, FeedlineLength, FeedlineGap, 
+                    FeedlineTaperLength, BondpadWidth, BondpadLength, 
+                    BondpadGap, False, 0,
+                    False, 100, ls)
+    
     D_metal.add_ref(TlineMetal)
     D_gap.add_ref(TlineGap)
+    if  BondpadSpacingRight is not None:
+        D_gap.add_polygon(BondpadSpacingLeft.get_polygons())
+        D_gap.add_polygon(BondpadSpacingRight.get_polygons())
 
     
-    Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
-    FinalChip = Device('FinalChip')
-    FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Ground'])
-    FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Ground'])
+    #Final chip structure
+    Ground_Plane, D_metal, FinalChip = FinalChipStructure(Chip, D_gap, D_metal, None, 100, Chipsize, ls,
+                       False, False)
 
     return Ground_Plane, D_metal, FinalChip
+
+
+
+    # # Layers
+    # ls = set_layers()
+    # # ls.add_layer('Ground', gds_layer=0, color = 'red')
+    # # ls.add_layer('Metal', gds_layer=1, color = 'blue')
+    # # ls.add_layer('Negative plane', gds_layer=2, color = 'black')
+    # #Origin will be defined in the center of the chip
+
+    # Chip = Device('Chip')
+    # Chip.add_polygon(pg.rectangle(size = Chipsize,layer = ls['Ground']).get_polygons())
+    # Chip.move(destination = (-Chipsize[0]/2, -Chipsize[1]/2)) #Center The chip
+    
+    # # Devices for the resonators and Tline metal and gap parts
+    # D_metal = Device('Metal')
+    # D_gap = Device('Gap')
+    
+    # #Tline in the center of the chip
+    # TlineMetal, TlineGap = Tline(FeedlineWidth, FeedlineLength, FeedlineGap, 
+    #                              FeedlineTaperLength, BondpadWidth, BondpadLength, BondpadGap)
+    # TlineMetal.movex(-FeedlineLength/2)
+    # TlineGap.movex(-FeedlineLength/2)
+
+    # D_metal.add_ref(TlineMetal)
+    # D_gap.add_ref(TlineGap)
+
+    # Ground_Plane = pg.boolean(Chip, D_gap, operation = 'not')
+    # FinalChip = Device('FinalChip')
+    # FinalChip.add_polygon(Ground_Plane.get_polygons(), layer = ls['Ground'])
+    # FinalChip.add_polygon(D_metal.get_polygons(), layer = ls['Ground'])
+    # FinalChip.add_polygon(Chip.get_polygons(), layer = ls['Negative plane'])
+
+    # return Ground_Plane, D_metal, FinalChip
