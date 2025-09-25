@@ -245,6 +245,7 @@ def InductorSection(NumberOfBends,
 
     PolyInductor = PathInductor.extrude(width = InductorWidth, simplify=1e-3, layer = 0)
     PolyInductor.add_port(name = 'Top', midpoint=(0, 0), orientation = 90, width = InductorWidth)
+    print(type(PolyInductor.get_polygons()[0]))
     return PolyInductor, StraightLength
     
 def SquareEtch(SpacingC0, 
