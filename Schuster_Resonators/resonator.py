@@ -382,7 +382,7 @@ def FinalChipStructure(Chip, D_gap, D_metal, D_resonators, FinalSpacingBondpads,
     EtchingBoxNegative = pg.rectangle(size = (Chipsize[0]+2*FinalSpacingBondpads, Chipsize[1] + 2*FinalSpacingBondpads), layer = ls['Metal'])
     EtchingBoxNegative.move(destination = (-Chipsize[0]/2 -FinalSpacingBondpads , -Chipsize[1]/2 - FinalSpacingBondpads)) #Center The chip
     EtchingBox = pg.boolean(EtchingBoxNegative, Chip, operation = 'not')
-    Marker = pg.rectangle(size = (1000, 100), layer = ls['Marker'])
+    Marker = pg.rectangle(size = (200, 200), layer = ls['Marker'])
     Marker.move(destination = (-Chipsize[0]/2 + 1000, -Chipsize[1]/2 + 200))
 
     FinalChip = Device('FinalChip')
