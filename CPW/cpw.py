@@ -73,6 +73,8 @@ def ind_CPW_per_length(width, spacing, ind_kin_sq):
     ind_kin = ind_kin_sq/width
     return ind_kin + ind_geo
 
+
+
 def impedance_CPW(width, spacing, epsilon_r, thickness_subs, ind_kin_sq):
     '''
     Returns the impedance of the CPW.
