@@ -49,7 +49,7 @@ def cap_CPW_per_length(width, spacing, epsilon_r, thickness_subs):
         k = fun_k_CPW(width, spacing, thickness_subs[i])
         k_prime = np.sqrt(1-k**2)
         K = ellipk(k)
-        K_prime = ellipkm1(k_prime)
+        K_prime = ellipk(k_prime)
         if i == len(epsilon_r)-1:
             e_r = epsilon_r[i]-1
         else:
